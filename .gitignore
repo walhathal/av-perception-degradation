@@ -1,0 +1,7 @@
+data/raw_footage/
+models/
+*.mp4
+__pycache__/
+.DS_Store
+*.pt
+*.pth
