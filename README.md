@@ -1,4 +1,3 @@
-cat > README.md << 'EOF'
 # Infrastructure-Conditioned Perception Degradation in Autonomous Monocular Vision
 ### A San Diego Coastal Environment Study
 
