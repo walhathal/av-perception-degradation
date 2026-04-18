@@ -54,12 +54,18 @@ GPS CSV + weather tag pipeline running on real footage AND CE rubric document pu
 
 ## Session Log
 
-### Session 1 — [DATE]
-**Worked on:**
-**Completed:**
-**Next session:**
-**Blockers:**
-**Time spent:**
+### Session 1 — 2026-04-17
+**Route:** Coastal — Mission Beach, Pacific Beach and La Jolla
+**Condition tag:** clear
+**Time:** 11:41 AM – 12:47 PM
+**Duration:** 66 minutes
+**Clips collected:** 21 front camera (F) MP4s
+**GPS extraction:** EasyOCR pipeline — 96% timestamp, 90% latitude, 44% longitude, 100% speed
+**Coordinates:** 32.72–32.75 N, -117.17 to -117.19 W
+**Completed:** GPS extraction pipeline built and tested, batch run complete
+**Next session:** Marine layer coastal drive — 6-8 AM target
+**Blockers:** Longitude OCR at 44% — fix before next batch run
+**Time spent:** 4 hours
 
 ---
 
