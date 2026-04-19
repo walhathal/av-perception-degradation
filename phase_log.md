@@ -69,12 +69,17 @@ GPS CSV + weather tag pipeline running on real footage AND CE rubric document pu
 
 ---
 
-### Session 2 — [DATE]
-**Worked on:**
-**Completed:**
-**Next session:**
-**Blockers:**
-**Time spent:**
+### Session 2 — 2026-04-18
+**Route:** Coastal / Urban mix
+**Condition tag:** glare (12:40–12:58 PM), clear (1:00–2:27 PM)
+**Time:** 12:40 PM – 2:27 PM
+**Duration:** ~107 minutes
+**Clips collected:** 36 front camera (F) MP4s
+**GPS extraction:** Raw RGB pipeline — 80% timestamp, 89% latitude, 62% longitude, 100% speed
+**Completed:** Weather tagging pipeline tested, camera settings optimized for all future drives
+**Next session:** Marine layer coastal drive — 6-8 AM target
+**Blockers:** 12-hour timestamp bug in April 18 data — fixed in camera for future sessions
+**Time spent:** ~3 hours
 
 ---
 
