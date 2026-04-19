@@ -37,7 +37,7 @@ to create measurable perception failure modes in monocular autonomous vision sys
 ## Study area
 - Primary: All San Diego routes — coastal (La Jolla, PB, Mission Bay), downtown, freeways (I-5/I-8/I-15), suburban
 - Extended: Road trips as needed
-- 4 weather condition tags: `clear`, `marine_layer`, `glare`, `wet_pavement`
+- 5 weather condition tags: `clear`, `overcast`, `marine_layer`, `glare`, `wet_pavement`
 
 ---
 

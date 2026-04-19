@@ -81,6 +81,7 @@ No published research treats these two variables as a *compound* failure system.
 | Condition Tag | Description | Best capture time |
 |--------------|-------------|-------------------|
 | `clear` | Dry, sunny, good visibility | Midday |
+| `overcast` | Heavy to partial cloud cover, flat diffuse light, reduced road contrast | Morning, any season |
 | `marine_layer` | Coastal fog, reduced contrast | Early morning (6–9am) |
 | `glare` | Direct sun on wet/dry road | Late afternoon (4–6pm) |
 | `wet_pavement` | Post-rain surface, no active rain | After coastal drizzle |

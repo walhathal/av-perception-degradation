@@ -8,13 +8,18 @@ with the same weather_condition_tag.
 Output: data/weather_tags/<source_csv_stem>_weather.csv
 Columns: filename, timestamp, latitude, longitude, speed_mph, weather_condition_tag
 
-Tags (in priority order):
+Auto-detected tags (in priority order):
   wet_pavement  — any measurable precipitation (>= 0.1 mm/h)
   marine_layer  — high cloud cover + low solar radiation, no rain
   glare         — high direct solar radiation + clear sky
   clear         — everything else
+
+Manual-only tag (use --override-tag):
+  overcast      — partial/heavy cloud cover, flat diffuse light, reduced road contrast;
+                  Open-Meteo cannot reliably distinguish overcast from clear at hourly resolution
 """
 
+import argparse
 import csv
 import logging
 import sys
@@ -149,10 +154,11 @@ def _first_valid_row(rows: list[dict]) -> Optional[dict]:
     return None
 
 
-def tag_csv(gps_csv: Path) -> Optional[Path]:
+def tag_csv(gps_csv: Path, override_tag: Optional[str] = None) -> Optional[Path]:
     """
     Tag all rows of one GPS CSV with a weather_condition_tag.
 
+    If override_tag is set, skips the API and stamps every row with that tag.
     Returns the output CSV path, or None if the file could not be processed.
     """
     rows: list[dict] = []
@@ -167,11 +173,50 @@ def tag_csv(gps_csv: Path) -> Optional[Path]:
         log.warning("%s is empty — skipping", gps_csv.name)
         return None
 
+    if override_tag:
+        log.info("%s → manual override: all rows tagged '%s'", gps_csv.name, override_tag)
+        out_fields = ["filename", "timestamp", "latitude", "longitude", "speed_mph",
+                      "weather_condition_tag"]
+        out_path = OUT_DIR / f"{gps_csv.stem}_weather.csv"
+        with open(out_path, "w", newline="") as fh:
+            writer = csv.DictWriter(fh, fieldnames=out_fields, extrasaction="ignore")
+            writer.writeheader()
+            for row in rows:
+                row["weather_condition_tag"] = override_tag
+                writer.writerow(row)
+        log.info("%s → %s  (%d rows)  tags: %s=%d",
+                 gps_csv.name, out_path.name, len(rows), override_tag, len(rows))
+        return out_path
+
     anchor = _first_valid_row(rows)
     if anchor is None:
-        log.warning("%s has no valid GPS rows — all rows will be tagged 'unknown'", gps_csv.name)
-        hourly_data = None
-        session_date = None
+        # Fallback: infer session date/hour from the filename (2026_MMDD_HHMMSS_...)
+        # Used when OCR fails to parse any timestamps (e.g. overlay format change).
+        fn_match = re.match(r"(\d{4})_(\d{2})(\d{2})_(\d{2})", gps_csv.stem)
+        coord_row = next(
+            (r for r in rows
+             if r.get("latitude") not in ("", "None", None)
+             and r.get("longitude") not in ("", "None", None)),
+            None,
+        )
+        if fn_match and coord_row:
+            year, month, day = fn_match.group(1), fn_match.group(2), fn_match.group(3)
+            fn_hour = int(fn_match.group(4))
+            session_date = f"{year}-{month}-{day}"
+            lat = float(coord_row["latitude"])
+            lon = float(coord_row["longitude"])
+            log.info(
+                "%s → no timestamps; inferring date %s hour %02d from filename",
+                gps_csv.name, session_date, fn_hour,
+            )
+            hourly_data = _fetch_hourly_weather(lat, lon, session_date)
+            anchor = {"timestamp": f"{session_date} {fn_hour:02d}:00",
+                      "latitude": coord_row["latitude"],
+                      "longitude": coord_row["longitude"]}
+        else:
+            log.warning("%s has no valid GPS rows — all rows will be tagged 'unknown'", gps_csv.name)
+            hourly_data = None
+            session_date = None
     else:
         lat = float(anchor["latitude"])
         lon = float(anchor["longitude"])
@@ -246,7 +291,7 @@ def _write_run_log(summary: list[dict]) -> None:
         return
     log_path = LOG_DIR / f"weather_tagging_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
     fields = ["clip", "session_date", "rows", "wet_pavement", "marine_layer", "glare",
-              "clear", "unknown"]
+              "clear", "overcast", "unknown"]
     with open(log_path, "w", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
@@ -255,9 +300,37 @@ def _write_run_log(summary: list[dict]) -> None:
 
 
 def main() -> None:
-    """Process all GPS CSVs in data/gps_logs/ or a single file passed as argv[1]."""
-    if len(sys.argv) > 1:
-        targets = [Path(sys.argv[1])]
+    """Process GPS CSVs in data/gps_logs/ — optionally filtered to one session folder.
+
+    Positional argument (optional):
+      path  — a GPS CSV file, a raw_footage session folder, or omitted for all CSVs
+
+    Optional flags:
+      --override-tag TAG  — skip API and stamp every row with TAG (e.g. overcast)
+    """
+    parser = argparse.ArgumentParser(description="Tag GPS session CSVs with weather conditions.")
+    parser.add_argument("path", nargs="?", help="GPS CSV, session folder, or omit for all")
+    parser.add_argument(
+        "--override-tag",
+        metavar="TAG",
+        help="Skip API and force all rows to this tag (e.g. --override-tag overcast)",
+    )
+    args = parser.parse_args()
+
+    if args.path:
+        arg = Path(args.path)
+        if arg.is_dir():
+            clip_stems = {p.stem for p in arg.rglob("*F.MP4")} | {p.stem for p in arg.rglob("*f.mp4")}
+            if not clip_stems:
+                log.error("No front-camera MP4s found in session folder %s", arg)
+                sys.exit(1)
+            targets = sorted(
+                GPS_DIR / f"{stem}_gps.csv"
+                for stem in sorted(clip_stems)
+                if (GPS_DIR / f"{stem}_gps.csv").exists()
+            )
+        else:
+            targets = [arg]
     else:
         targets = sorted(GPS_DIR.glob("*_gps.csv"))
 
@@ -266,17 +339,21 @@ def main() -> None:
         log.error("Run extract_gps_ocr.py first to generate them.")
         sys.exit(1)
 
+    override_tag: Optional[str] = args.override_tag
+    if override_tag:
+        log.info("Override tag active: '%s' — API calls skipped", override_tag)
     log.info("Found %d GPS CSV(s) to tag", len(targets))
 
     summary: list[dict] = []
     for gps_csv in tqdm(targets, desc="Clips", unit="clip"):
-        out_path = tag_csv(gps_csv)
+        out_path = tag_csv(gps_csv, override_tag=override_tag)
         if out_path is None:
             continue
 
         # Gather stats for the run log
         tag_counts: dict[str, int] = {k: 0 for k in
-                                       ("wet_pavement", "marine_layer", "glare", "clear", "unknown")}
+                                       ("wet_pavement", "marine_layer", "glare",
+                                        "clear", "overcast", "unknown")}
         session_date = "unknown"
         with open(out_path, newline="") as fh:
             rows = list(csv.DictReader(fh))
@@ -293,8 +370,8 @@ def main() -> None:
         entry.update(tag_counts)
         summary.append(entry)
 
-        # Rate-limit: be respectful to the free API
-        if len(targets) > 1:
+        # Rate-limit: be respectful to the free API (skip when overriding)
+        if len(targets) > 1 and not override_tag:
             time.sleep(1)
 
     _write_run_log(summary)
@@ -303,25 +380,25 @@ def main() -> None:
     if not summary:
         return
     total = sum(r["rows"] for r in summary)
-    print("\n" + "=" * 76)
-    print(f"{'Clip':<40} {'rows':>5}  {'wet':>4}  {'marine':>6}  {'glare':>5}  {'clear':>5}")
-    print("-" * 76)
+    print("\n" + "=" * 84)
+    print(f"{'Clip':<40} {'rows':>5}  {'wet':>4}  {'marine':>6}  {'glare':>5}  {'ovcst':>5}  {'clear':>5}")
+    print("-" * 84)
     for r in summary:
-        n = r["rows"] or 1
         print(
             f"{r['clip']:<40} {r['rows']:>5}  "
             f"{r['wet_pavement']:>4}  {r['marine_layer']:>6}  "
-            f"{r['glare']:>5}  {r['clear']:>5}"
+            f"{r['glare']:>5}  {r.get('overcast', 0):>5}  {r['clear']:>5}"
         )
-    print("-" * 76)
+    print("-" * 84)
     print(
         f"{'TOTAL':<40} {total:>5}  "
         f"{sum(r['wet_pavement'] for r in summary):>4}  "
         f"{sum(r['marine_layer'] for r in summary):>6}  "
         f"{sum(r['glare'] for r in summary):>5}  "
+        f"{sum(r.get('overcast', 0) for r in summary):>5}  "
         f"{sum(r['clear'] for r in summary):>5}"
     )
-    print("=" * 76 + "\n")
+    print("=" * 84 + "\n")
     log.info("Weather-tagged CSVs saved to %s", OUT_DIR)
 
 

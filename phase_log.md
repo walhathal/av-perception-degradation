@@ -60,11 +60,11 @@ GPS CSV + weather tag pipeline running on real footage AND CE rubric document pu
 **Time:** 11:41 AM – 12:47 PM
 **Duration:** 66 minutes
 **Clips collected:** 21 front camera (F) MP4s
-**GPS extraction:** EasyOCR pipeline — 96% timestamp, 90% latitude, 44% longitude, 100% speed
+**GPS extraction:** EasyOCR pipeline — 96% timestamp, 90% latitude, 49% longitude, 100% speed (re-run 2026-04-19 after `\b` regex fix; original was 44%)
 **Coordinates:** 32.72–32.75 N, -117.17 to -117.19 W
 **Completed:** GPS extraction pipeline built and tested, batch run complete
 **Next session:** Marine layer coastal drive — 6-8 AM target
-**Blockers:** Longitude OCR at 44% — fix before next batch run
+**Blockers:** Longitude still at 49% after regex fix — remaining misses are OCR detection failures on low-contrast frames, not regex. CLAHE preprocessing flagged as pre-Phase 2 task to push toward 85%+
 **Time spent:** 4 hours
 
 ---
@@ -75,11 +75,39 @@ GPS CSV + weather tag pipeline running on real footage AND CE rubric document pu
 **Time:** 12:40 PM – 2:27 PM
 **Duration:** ~107 minutes
 **Clips collected:** 36 front camera (F) MP4s
-**GPS extraction:** Raw RGB pipeline — 80% timestamp, 89% latitude, 62% longitude, 100% speed
+**GPS extraction:** Raw RGB pipeline — 80% timestamp, 89% latitude, 62% longitude, 100% speed (re-run 2026-04-19 after `\b` regex fix; longitude unchanged — misses are OCR detection failures, not regex)
 **Completed:** Weather tagging pipeline tested, camera settings optimized for all future drives
 **Next session:** Marine layer coastal drive — 6-8 AM target
-**Blockers:** 12-hour timestamp bug in April 18 data — fixed in camera for future sessions
+**Blockers:** 12-hour timestamp bug in April 18 data — fixed in camera for future sessions. Longitude at 62% due to midday glare washing out cyan overlay; CLAHE preprocessing required to improve
 **Time spent:** ~3 hours
+
+---
+
+### Session 3 — 2026-04-19
+**Route:** Urban (Downtown → Bankers Hills area)
+**Condition tag:** overcast (visual review — partial-to-heavy cloud cover, flat diffuse light, reduced road contrast; Open-Meteo returned `clear` for this hour, which reflects an API limitation: the hourly aggregate masked partial overcast conditions that were visually present)
+**Time:** 9:08 AM – 9:44 AM
+**Duration:** ~36 minutes
+**Clips collected:** 13 front camera (F) MP4s
+**GPS extraction:** Raw RGB pipeline — 98% timestamp, 98% latitude, 73% longitude, 100% speed
+**Completed:** GPS CSV + weather-tagged CSV pipeline complete end-to-end with real timestamps
+**Bug fixed:** Camera timestamp format changed to ISO (YYYY-MM-DD HH:MM:SS) after April 18 camera fix — `_RE_TS_ISO` regex added to `extract_gps_ocr.py`; `tag_weather.py` now has filename-date fallback for future zero-timestamp edge cases
+**Time spent:** ~2 hours
+
+---
+
+---
+
+## Pipeline Debug Log
+
+### Longitude OCR — 2026-04-19
+**Issue:** Longitude parse rates below target across all three sessions (44–73%)
+**Root cause investigation:**
+- `\b` word boundary in `_RE_LON` caused silent misses when decimal had 5+ OCR digits or when the next field started with a letter (no space between fields)
+- Fix: removed `\b` from regex — `(\d{4})` stops naturally at the first non-digit
+- Result: Session 1 recovered +5pp (44% → 49%); Sessions 2 and 3 unchanged
+**True root cause for remaining misses:** OCR detection failure — EasyOCR does not emit a `W:` token for frames where the cyan overlay has insufficient contrast (glare, flat light). No regex change can recover these.
+**Next step:** Implement CLAHE (Contrast Limited Adaptive Histogram Equalization) preprocessing on the overlay crop before passing to EasyOCR. Target: 85%+ longitude across all sessions. Flag as **pre-Phase 2 task** before labeling begins.
 
 ---
 
