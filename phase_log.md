@@ -95,7 +95,29 @@ GPS CSV + weather tag pipeline running on real footage AND CE rubric document pu
 **Time spent:** ~2 hours
 
 ---
-
+### Session 4 — 2026-04-22
+**Route:** I-94, I-5, I-8, El Cajon Blvd, Main St (San Diego → El Cajon)
+**Condition tag:** glare
+**Time:** 6:20 PM – 7:10 PM
+**Duration:** ~50 minutes
+**Clips collected:** 14 front camera (F) MP4s
+**GPS extraction:** OCR pipeline — 96% timestamp, 98% latitude, 42% longitude, 98% speed
+**Completed:** GPS extraction and weather tagging complete. First freeway session (I-8 corridor). Longitude at 42% on three clips (321, 323, 325) — root cause is sunset glare washing out W: field on overlay. Known limitation, flagged for CLAHE preprocessing pre-Phase 2. Open-Meteo returned clear — overridden to glare based on visual conditions (direct sun, eastbound I-8, 6:20–7:10 PM).
+**Next session:** Marine layer coastal drive — 6–8 AM target (La Jolla/PB corridor)
+**Blockers:** Longitude OCR degraded under direct glare — confirms sunset glare as primary driver of W: field detection failures
+**Time spent:** ~1 hour
+---
+### Session 5 — 2026-04-24
+**Route:** Mission Bay, Sunset Cliffs, Harbor Dr, Downtown San Diego
+**Condition tag:** overcast
+**Time:** 5:30 PM – 7:26 PM
+**Duration:** ~116 minutes
+**Clips collected:** 33 front camera (F) MP4s
+**GPS extraction:** OCR pipeline — 96% timestamp, 99% latitude, 72% longitude, 100% speed
+**Completed:** GPS extraction and weather tagging complete. Longest session to date (33 clips, 1,068 rows). Open-Meteo returned mixed tags (glare/clear/marine_layer) — all overridden to overcast based on visual conditions (partial to full cloud cover throughout). Hour 19 marine_layer tag confirmed as sunset physics not coastal fog.
+**Next session:** Marine layer coastal drive — 6–8 AM target (La Jolla/PB corridor)
+**Blockers:** Longitude at 72% — consistent with prior sessions, no action needed pre-Phase 2
+**Time spent:** ~2 hours
 ---
 
 ## Pipeline Debug Log
