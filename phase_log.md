@@ -120,6 +120,19 @@ GPS CSV + weather tag pipeline running on real footage AND CE rubric document pu
 **Time spent:** ~2 hours
 ---
 
+### Session 6 — 2026-04-25
+**Route:** Fiesta Island, Mission Valley, Hillcrest, Downtown San Diego
+**Condition tag:** wet_pavement
+**Time:** 3:49 PM – 4:52 PM
+**Duration:** ~63 minutes
+**Clips collected:** 17 front camera (F) MP4s
+**GPS extraction:** OCR pipeline — 98% timestamp, 100% latitude, 61% longitude, 100% speed
+**Completed:** GPS extraction and weather tagging complete. First `wet_pavement` session in dataset. Open-Meteo confirmed measurable precipitation for April 25 — no override needed; API tag accepted as-is. 600 total rows, all 17 clips tagged `wet_pavement`.
+**Next session:** Marine layer coastal drive — 6–8 AM target (La Jolla/PB corridor)
+**Blockers:** Longitude at 61% — consistent with wet/overcast conditions reducing overlay contrast. Known limitation, flagged for CLAHE preprocessing pre-Phase 2.
+**Time spent:** ~1 hour
+---
+
 ## Pipeline Debug Log
 
 ### Longitude OCR — 2026-04-19
