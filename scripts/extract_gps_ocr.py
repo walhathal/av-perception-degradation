@@ -63,11 +63,10 @@ def _init_worker() -> None:
 # Sessions 1-2 format: "010MPH  N:32.7302  W:117.1667  17/04/2026 11:41:41"
 # Session 3+ format:   "010MPH  N:32.7302  W:117.1667  2026-04-19 09:09:10"  (ISO after camera fix)
 _RE_LAT = re.compile(r"N[:\s]?(\d{1,3}\.\d+)", re.IGNORECASE)
-# EasyOCR sometimes splits "W:117.1667" → "W:117 1667" or "W:117 . 1667"
-# No \b at end: \b fails when decimal is followed by another digit (OCR noise adds 5th digit)
-# or when the next field starts with a letter (no space between fields). (\d{4}) stops
-# naturally at the first non-digit, so no boundary assertion is needed.
-_RE_LON = re.compile(r"W[:\s]?(\d{1,3})\s*\.?\s*(\d{4})", re.IGNORECASE)
+# EasyOCR sometimes splits "W:117.1667" → "W:117 1667", "W:117 . 1667", or "W: 117.1667"
+# (colon + space before digits). [:\s]* (zero-or-more) handles all separator variants:
+# "W:117", "W: 117", "W : 117". No \b at end: stops naturally at first non-digit.
+_RE_LON = re.compile(r"W[:\s]*(\d{1,3})\s*\.?\s*(\d{4})", re.IGNORECASE)
 _RE_SPD = re.compile(r"(\d{1,3})\s*MPH", re.IGNORECASE)
 # Legacy: DD/MM/YYYY HH:MM[:SS] [AM/PM]
 _RE_TS     = re.compile(r"(\d{2}/\d{2}/\d{4})\s*(\d{2}[:.]\d{2})(?:[:.]\d{2})?(?:\s*([AaPp][Mm]))?", re.IGNORECASE)

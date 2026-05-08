@@ -60,7 +60,7 @@ GPS CSV + weather tag pipeline running on real footage AND CE rubric document pu
 **Time:** 11:41 AM – 12:47 PM
 **Duration:** 66 minutes
 **Clips collected:** 21 front camera (F) MP4s
-**GPS extraction:** EasyOCR pipeline — 96% timestamp, 90% latitude, 49% longitude, 100% speed (re-run 2026-04-19 after `\b` regex fix; original was 44%)
+**GPS extraction:** EasyOCR pipeline — 96% timestamp, 90% latitude, 95% longitude, 100% speed (re-run 2026-04-19 after `\b` regex fix; original was 44%; re-run 2026-05-07 after `W[:\s]*` fix)
 **Coordinates:** 32.72–32.75 N, -117.17 to -117.19 W
 **Completed:** GPS extraction pipeline built and tested, batch run complete
 **Next session:** Marine layer coastal drive — 6-8 AM target
@@ -75,7 +75,7 @@ GPS CSV + weather tag pipeline running on real footage AND CE rubric document pu
 **Time:** 12:40 PM – 2:27 PM
 **Duration:** ~107 minutes
 **Clips collected:** 36 front camera (F) MP4s
-**GPS extraction:** Raw RGB pipeline — 80% timestamp, 89% latitude, 62% longitude, 100% speed (re-run 2026-04-19 after `\b` regex fix; longitude unchanged — misses are OCR detection failures, not regex)
+**GPS extraction:** Raw RGB pipeline — 80% timestamp, 89% latitude, 71% longitude, 100% speed (re-run 2026-04-19 after `\b` regex fix; re-run 2026-05-07 after `W[:\s]*` fix)
 **Completed:** Weather tagging pipeline tested, camera settings optimized for all future drives
 **Next session:** Marine layer coastal drive — 6-8 AM target
 **Blockers:** 12-hour timestamp bug in April 18 data — fixed in camera for future sessions. Longitude at 62% due to midday glare washing out cyan overlay; CLAHE preprocessing required to improve
@@ -89,7 +89,7 @@ GPS CSV + weather tag pipeline running on real footage AND CE rubric document pu
 **Time:** 9:08 AM – 9:44 AM
 **Duration:** ~36 minutes
 **Clips collected:** 13 front camera (F) MP4s
-**GPS extraction:** Raw RGB pipeline — 98% timestamp, 98% latitude, 73% longitude, 100% speed
+**GPS extraction:** Raw RGB pipeline — 98% timestamp, 98% latitude, 74% longitude, 100% speed (re-run 2026-05-07 after `W[:\s]*` fix)
 **Completed:** GPS CSV + weather-tagged CSV pipeline complete end-to-end with real timestamps
 **Bug fixed:** Camera timestamp format changed to ISO (YYYY-MM-DD HH:MM:SS) after April 18 camera fix — `_RE_TS_ISO` regex added to `extract_gps_ocr.py`; `tag_weather.py` now has filename-date fallback for future zero-timestamp edge cases
 **Time spent:** ~2 hours
@@ -113,7 +113,7 @@ GPS CSV + weather tag pipeline running on real footage AND CE rubric document pu
 **Time:** 5:30 PM – 7:26 PM
 **Duration:** ~116 minutes
 **Clips collected:** 33 front camera (F) MP4s
-**GPS extraction:** OCR pipeline — 96% timestamp, 99% latitude, 72% longitude, 100% speed
+**GPS extraction:** OCR pipeline — 96% timestamp, 99% latitude, 73% longitude, 100% speed (re-run 2026-05-07 after `W[:\s]*` fix)
 **Completed:** GPS extraction and weather tagging complete. Longest session to date (33 clips, 1,068 rows). Open-Meteo returned mixed tags (glare/clear/marine_layer) — all overridden to overcast based on visual conditions (partial to full cloud cover throughout). Hour 19 marine_layer tag confirmed as sunset physics not coastal fog.
 **Next session:** Marine layer coastal drive — 6–8 AM target (La Jolla/PB corridor)
 **Blockers:** Longitude at 72% — consistent with prior sessions, no action needed pre-Phase 2
@@ -132,6 +132,18 @@ GPS CSV + weather tag pipeline running on real footage AND CE rubric document pu
 **Blockers:** Longitude at 61% — consistent with wet/overcast conditions reducing overlay contrast. Known limitation, flagged for CLAHE preprocessing pre-Phase 2.
 **Time spent:** ~1 hour
 ---
+### Session 7 — 2026-05-02
+**Route:** I-5 North, San Diego (Miramar) → Long Beach (405/I-22 interchange)
+**Condition tag:** marine_layer
+**Time:** 10:43 AM – 11:57 AM
+**Duration:** ~74 minutes
+**Clips collected:** 25 front camera (F) MP4s
+**GPS extraction:** OCR pipeline — 94% timestamp, 99% latitude, 100% longitude, 100% speed (regex fix `W[:\s]*` applied same session)
+**Completed:** GPS extraction and weather tagging complete. First session leaving San Diego County — route extended to LA County (Torrance/Long Beach). Open-Meteo returned clear (falls through all thresholds) — overridden to marine_layer based on visual conditions (coastal fog, flat diffuse light, suppressed direct radiation at 25% of shortwave at hour 10) and entirely coastal I-5 corridor route. First confirmed marine_layer session — all 5 condition tags now captured.
+**Next session:** CE rubric scoring + Phase 2 planning
+**Blockers:** None — longitude resolved to 100% after `W[:\s]*` regex fix applied same session
+**Time spent:** ~1 hour
+
 
 ## Pipeline Debug Log
 
